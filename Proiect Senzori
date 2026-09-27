@@ -1,0 +1,58 @@
+#include <ThreeWire.h>
+#include <RtcDS1302.h>
+
+// RTC setup
+const int IO = 4;     // DAT
+const int SCLK = 5;   // CLK
+const int CE = 3;     // RST
+ThreeWire myWire(IO, SCLK, CE);
+RtcDS1302<ThreeWire> Rtc(myWire);
+
+// Pini senzor și releu
+const int ldrPin = 8;        // Fotoresistor (digital, HIGH = întuneric)
+const int pirPin = 2;        // PIR
+const int relayPin = 6;      // Releu
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(ldrPin, INPUT);
+  pinMode(pirPin, INPUT);
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, LOW); // asigurăm că releul e oprit
+
+  // Inițializare RTC
+  Rtc.Begin();
+  if (!Rtc.IsDateTimeValid()) {
+    Rtc.SetDateTime(RtcDateTime(_DATE, __TIME_));
+  }
+}
+
+void loop() {
+  RtcDateTime now = Rtc.GetDateTime();
+  int ora = now.Hour();
+
+
+  Serial.print("Ora: ");
+  Serial.println(ora);
+  Serial.print("Intuneric: ");
+  Serial.println(esteIntuneric ? "DA" : "NU");
+
+  if (esteIntuneric && esteNoapte) {
+    int miscare = digitalRead(pirPin);
+    if (miscare == HIGH) {
+      Serial.println("Miscare detectata! Activam releul.");
+      digitalWrite(relayPin, HIGH);
+      delay(5000); // menține releul activat 5 secunde
+      digitalWrite(relayPin, LOW);
+    } else {
+      Serial.println("Nu e miscare.");
+      digitalWrite(relayPin, LOW);
+    }
+  } else {
+    Serial.println("Conditii insuficiente. PIR inactiv.");
+    digitalWrite(relayPin, LOW);
+  
+
+  delay(500);
+}
